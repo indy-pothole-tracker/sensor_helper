@@ -86,66 +86,33 @@ public class MainActivity extends Activity implements SensorEventListener {
         file_size = (TextView) findViewById(R.id.file_size);
         file_name = (TextView) findViewById(R.id.file_name);
 
-        _switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                new AsyncTask<Void, Void, Void>() {
-
-                    @Override
-                    protected Void doInBackground(Void... params) {
-                        try {
-                            out.flush();
-                        } catch (IOException e) {
-                            Log.e("MainActivity", "Unable to flush stream", e);
-                        }
-                        return null;
-                    }
-
-                    @Override
-                    protected void onPostExecute(Void aVoid) {
-                        file_size.setText("Size:" + file.length()/1024 + "KB");
-                    }
-                }.execute();
-
-                if(isChecked) {
-                    sensorManager.registerListener(MainActivity.this, sensor, SensorManager.SENSOR_DELAY_GAME);
-                }
-                else {
-                    sensorManager.unregisterListener(MainActivity.this);
-
-                    dialog = ProgressDialog.show(MainActivity.this, "", "Uploading file...", true);
-
-                    new AsyncTask<Void, Void, Void>() {
-                        @Override
-                        protected Void doInBackground(Void... params) {
-                            uploadFile(file.getAbsolutePath());
-                            return null;
-                        }
-                    }.execute();
-                }
-            }
-        });
+        _switch.setOnCheckedChangeListener(new MyOnCheckedChangeListener());
     }
 
     @Override
     public void onStart()
     {
         super.onStart();
-        File root = Environment.getExternalStorageDirectory();
-        file = new File(root, "Sensor_log" + System.currentTimeMillis() + ".csv");
+        createFile();
+        file_name.setText(file.getName());
+    }
 
-        FileWriter filewriter = null;
+    private void createFile() {
+        File root = Environment.getExternalStorageDirectory();
+        file = new File(root, "Sensor_log_" + System.currentTimeMillis() + ".csv");
+
+        FileWriter filewriter;
         try {
             filewriter = new FileWriter(file, true);
+
+            if(out != null)
+                out.close();
+
+            out = new BufferedWriter(filewriter);
         } catch (IOException e) {
             Log.e("MainActivity", "Unable to create writer", e);
             finish();
         }
-        if(filewriter != null)
-            out = new BufferedWriter(filewriter);
-
-        file_name.setText(file.getName());
     }
 
     @Override
@@ -173,13 +140,18 @@ public class MainActivity extends Activity implements SensorEventListener {
             Log.e("MainActivity", "Unable to close writer", e);
             finish();
         }
+        if(file.length() == 0)
+        {
+            if(!file.delete())
+            {
+                Toast.makeText(this, "File could not be deleted.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
-    public int uploadFile(String sourceFileUri) {
+    public int uploadFile(String fileName) {
         String upLoadServerUri = getString(R.string.url);
         int serverResponseCode = 0;
-
-        String fileName = sourceFileUri;
 
         HttpURLConnection conn = null;
         DataOutputStream dos = null;
@@ -188,14 +160,14 @@ public class MainActivity extends Activity implements SensorEventListener {
         String boundary = "*****";
         int bytesRead, bytesAvailable, bufferSize;
         byte[] buffer;
-        int maxBufferSize = 1 * 1024 * 1024;
+        int maxBufferSize = 3 * 1024 * 1024;
 
         if (!file.isFile()) {
 
             dialog.dismiss();
 
             Log.e("uploadFile", "Source File not exist :"
-                    +sourceFileUri);
+                    +fileName);
 
             return 0;
         }
@@ -301,5 +273,55 @@ public class MainActivity extends Activity implements SensorEventListener {
             return serverResponseCode;
 
         } // End else block
+    }
+
+    private class MyOnCheckedChangeListener implements CompoundButton.OnCheckedChangeListener {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+            new AsyncTask<Void, Void, Void>() {
+
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        out.flush();
+                    } catch (IOException e) {
+                        Log.e("MainActivity", "Unable to flush stream", e);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    file_size.setText("Size:" + file.length()/1024 + "KB");
+                }
+            }.execute();
+
+            if(isChecked) {
+                sensorManager.registerListener(MainActivity.this, sensor, SensorManager.SENSOR_DELAY_GAME);
+            }
+            else {
+                sensorManager.unregisterListener(MainActivity.this);
+
+                dialog = ProgressDialog.show(MainActivity.this, "", "Uploading file...", true);
+
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... params) {
+
+                        if(uploadFile(file.getAbsolutePath()) == 200)
+                        {
+                            if(!file.delete())
+                                Toast.makeText(MainActivity.this, "File could not be deleted", Toast.LENGTH_LONG).show();
+                            else {
+                                createFile();
+                                file_name.setText(file.getName());
+                            }
+                        }
+                        return null;
+                    }
+                }.execute();
+            }
+        }
     }
 }
