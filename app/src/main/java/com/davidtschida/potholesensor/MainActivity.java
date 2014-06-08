@@ -11,6 +11,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -26,20 +28,24 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-
 public class MainActivity extends Activity implements SensorEventListener {
 
     private SensorManager sensorManager;
     private Sensor sensor;
+
+    private long initialLength;
 
     private double currentX, currentY, currentZ;
     private int accuracy;
 
     TextView x,y,z, acc, time, file_size, file_name;
     Switch _switch;
+    Button btn_pothole;
 
     File file;
     BufferedWriter out;
+
+    boolean pothole = false;
 
     ProgressDialog dialog = null;
 
@@ -57,7 +63,10 @@ public class MainActivity extends Activity implements SensorEventListener {
         time.setText("Time:"+ _time);
 
         try {
-            out.write(_time + ", " + currentX+ ", " + currentY + ", " + currentZ+ ", " + accuracy + "\n");
+            out.write(_time + ", " + currentX+ ", " + currentY + ", " + currentZ+ ", " + accuracy);
+            if(pothole) out.write(", true");
+            pothole=false;
+            out.newLine();
         } catch (IOException e) {
             Log.e("MainActivity", "Unable to write to file", e);
         }
@@ -77,6 +86,19 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 
+        initViews();
+
+        _switch.setOnCheckedChangeListener(new MyOnCheckedChangeListener());
+
+        btn_pothole.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pothole = true;
+            }
+        });
+    }
+
+    private void initViews() {
         x = (TextView) findViewById(R.id.sensor_x);
         y = (TextView) findViewById(R.id.sensor_y);
         z = (TextView) findViewById(R.id.sensor_z);
@@ -85,8 +107,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         _switch = (Switch) findViewById(R.id._switch);
         file_size = (TextView) findViewById(R.id.file_size);
         file_name = (TextView) findViewById(R.id.file_name);
-
-        _switch.setOnCheckedChangeListener(new MyOnCheckedChangeListener());
+        btn_pothole = (Button) findViewById(R.id.pothole);
     }
 
     @Override
@@ -110,8 +131,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 
             out = new BufferedWriter(filewriter);
 
+            out.write("time(unix), x, y, z, accuracy, pothole\n");
 
-            out.write("time(unix), x, y, z, accuracy\n");
+            out.flush();
+
+            initialLength = file.length();
         } catch (IOException e) {
             Log.e("MainActivity", "Unable to create writer", e);
             finish();
@@ -143,7 +167,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             Log.e("MainActivity", "Unable to close writer", e);
             finish();
         }
-        if(file.length() == 0)
+        if(file.length() == initialLength)
         {
             if(!file.delete())
             {
@@ -152,7 +176,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
     }
 
-    public int uploadFile(String fileName) {
+    private int uploadFile(String fileName) {
         String upLoadServerUri = getString(R.string.url);
         int serverResponseCode = 0;
 
@@ -252,8 +276,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        Toast.makeText(MainActivity.this, "MalformedURLException",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "MalformedURLException", Toast.LENGTH_SHORT).show();
                     }
                 });
 

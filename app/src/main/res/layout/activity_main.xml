@@ -63,4 +63,11 @@
         android:layout_below="@id/sensor_acc"
         android:text="Record Data"/>
 
+    <Button
+        android:id="@+id/pothole"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_below="@+id/_switch"
+        android:text="Pothole"/>
+
 </RelativeLayout>
