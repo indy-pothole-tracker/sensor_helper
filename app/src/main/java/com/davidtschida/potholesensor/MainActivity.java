@@ -114,7 +114,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     {
         super.onStart();
         File root = Environment.getExternalStorageDirectory();
-        file = new File(root, "Sensor_log" + System.currentTimeMillis() + ".txt");
+        file = new File(root, "Sensor_log" + System.currentTimeMillis() + ".csv");
 
         FileWriter filewriter = null;
         try {
