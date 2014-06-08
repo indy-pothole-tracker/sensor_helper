@@ -109,6 +109,9 @@ public class MainActivity extends Activity implements SensorEventListener {
                 out.close();
 
             out = new BufferedWriter(filewriter);
+
+
+            out.write("time(unix), x, y, z, accuracy\n");
         } catch (IOException e) {
             Log.e("MainActivity", "Unable to create writer", e);
             finish();
@@ -307,16 +310,18 @@ public class MainActivity extends Activity implements SensorEventListener {
 
                 new AsyncTask<Void, Void, Void>() {
                     @Override
+                    protected void onPostExecute(Void aVoid) {
+                        file_name.setText(file.getName());
+                    }
+
+                    @Override
                     protected Void doInBackground(Void... params) {
 
                         if(uploadFile(file.getAbsolutePath()) == 200)
                         {
                             if(!file.delete())
                                 Toast.makeText(MainActivity.this, "File could not be deleted", Toast.LENGTH_LONG).show();
-                            else {
-                                createFile();
-                                file_name.setText(file.getName());
-                            }
+                            createFile();
                         }
                         return null;
                     }
