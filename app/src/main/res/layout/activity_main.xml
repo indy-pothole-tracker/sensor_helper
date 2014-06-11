@@ -70,4 +70,20 @@
         android:layout_below="@+id/_switch"
         android:text="Pothole"/>
 
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/pothole"
+        android:singleLine="true"
+        android:id="@+id/name"
+        android:hint="Enter your name"/>
+
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/name"
+        android:singleLine="true"
+        android:id="@+id/details"
+        android:hint="Enter Details about the data"/>
+
 </RelativeLayout>

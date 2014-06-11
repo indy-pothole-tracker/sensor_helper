@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +50,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     ProgressDialog dialog = null;
 
+    EditText name, description;
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         currentX = event.values[0];
@@ -63,7 +66,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         time.setText("Time:"+ _time);
 
         try {
-            out.write(_time + ", " + currentX+ ", " + currentY + ", " + currentZ+ ", " + accuracy);
+            out.write(_time + ", " + currentX + ", " + currentY + ", " + currentZ+ ", " + accuracy);
             if(pothole) out.write(", true");
             pothole=false;
             out.newLine();
@@ -108,6 +111,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         file_size = (TextView) findViewById(R.id.file_size);
         file_name = (TextView) findViewById(R.id.file_name);
         btn_pothole = (Button) findViewById(R.id.pothole);
+        name = (EditText) findViewById(R.id.name);
+        description = (EditText) findViewById(R.id.details);
     }
 
     @Override
